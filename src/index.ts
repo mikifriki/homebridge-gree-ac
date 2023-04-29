@@ -206,29 +206,39 @@ class CHThermostatAccessory implements AccessoryPlugin {
       default:
         state = hap.Characteristic.CurrentHeaterCoolerState.INACTIVE;
     }
-
-    this.logger.debug('Triggered GET CurrentHeatingCoolingState: %s', state);
+    this.logger.debug('Triggered GET CurrentHeatingCoolingState: %s', state , mode);
     return state;
   }
 
 
   /**
    * Handle requests to get the current value of the "Target Heating Cooling State" characteristic
-   */
+   * To fix the issue of the Accessory Detail in home giving the wrong visual feedback. The below mapping is done
+  */
   getTargetHeaterCoolerState() {
-    const currentValue = hap.Characteristic.TargetHeatingCoolingState.OFF;
-
-    this.logger.debug('Triggered GET TargetHeatingCoolingState: %s', currentValue);
-    return currentValue;
+    // Characteristic => True value
+    // Heat 1 => 4
+    // Auto 3 => 0
+    // Cool 2 => 1
+    // Off 0 => none
+    const AcMode = this.device.getMode();
+    switch(AcMode) {
+      case Commands.mode.value.heat:
+        return hap.Characteristic.TargetHeatingCoolingState.HEAT;
+      case Commands.mode.value.cool:
+        return hap.Characteristic.TargetHeatingCoolingState.COOL;
+      case Commands.mode.value.auto:
+        return hap.Characteristic.TargetHeatingCoolingState.AUTO;
+      default: 
+        return hap.Characteristic.TargetHeatingCoolingState.OFF;
+    }
   }
 
   /**
    * Handle requests to set the "Target Heating Cooling State" characteristic
    */
   setTargetHeaterCoolerState(value: CharacteristicValue) {
-
     let mode = Commands.mode.value.auto;
-
     switch (value) {
       case hap.Characteristic.TargetHeaterCoolerState.HEAT:
         mode = Commands.mode.value.heat;
@@ -240,7 +250,7 @@ class CHThermostatAccessory implements AccessoryPlugin {
         mode = Commands.mode.value.auto;
     }
 
-    this.logger.info('Triggered SET TargetHeaterCoolerState: %s', mode);
+    this.logger.debug('Triggered SET TargetHeaterCoolerState: %s', mode);
 
     this.device.setMode(mode);
   }
@@ -280,7 +290,7 @@ class CHThermostatAccessory implements AccessoryPlugin {
    * Handle requests to set the "Target Temperature" characteristic
    */
   setTargetTemperature(value: CharacteristicValue) {
-    this.logger.info('Triggered SET TargetTemperature: %s', value);
+    this.logger.debug('Triggered SET TargetTemperature: %s', value);
 
     this.device.setTargetTemp(parseInt('' + value));
   }
